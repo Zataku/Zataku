@@ -41,7 +41,7 @@ class Ship:
 
     def get_width(self):
         return self.ship_img.get_width()
-    def get_width(self):
+    def get_height(self):
         return self.ship_img.get_height()
     
 class Player(Ship):
@@ -96,5 +96,7 @@ def main():
             player.y += player_vel
 
 
-
 main()
+
+
+
