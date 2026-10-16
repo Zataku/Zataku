@@ -239,7 +239,7 @@ class App:
         self.root = root
         self.messages = queue.Queue()
 
-        root.title("Image Sorter")
+        root.title("ImageSorter by Zab")
         root.geometry("720x680")
         root.minsize(720, 560)
         root.configure(bg=BG)
@@ -270,10 +270,14 @@ class App:
         self.sort_btn.pack(side="left", padx=8)
         Button(buttons, "Open folder", self.open_folder).pack(side="right")
 
+        # Packed before the log so it keeps its spot at the bottom when the window shrinks.
+        tk.Label(root, text="ImageSorter by Zab", bg=BG, fg="#7a7f86",
+                 font=("Consolas", 9)).pack(side="bottom", anchor="e", padx=20, pady=(0, 8))
+
         self.log_box = scrolledtext.ScrolledText(root, height=8, state="disabled", wrap="word",
                                                  bg=FIELD, fg="#cfd3d8", font=("Consolas", 10),
                                                  relief="flat", insertbackground=FG)
-        self.log_box.pack(fill="both", expand=True, padx=20, pady=(0, 16))
+        self.log_box.pack(fill="both", expand=True, padx=20, pady=(0, 6))
 
         self.root.after(100, self.drain_messages)
         threading.Thread(target=sounds.prepare, daemon=True).start()
@@ -323,7 +327,7 @@ class App:
         text = self.folder.get().strip()
         folder = Path(text).expanduser() if text else None
         if not folder or not folder.is_dir():
-            messagebox.showwarning("Image Sorter", "Please choose a folder first.")
+            messagebox.showwarning("ImageSorter by Zab", "Please choose a folder first.")
             return None
         return folder.resolve()
 
@@ -346,7 +350,7 @@ class App:
         if not folder:
             return
         if not dry_run and not messagebox.askyesno(
-                "Image Sorter", f"Sort the images in:\n{folder}\n\nFiles will be moved into subfolders."):
+                "ImageSorter by Zab", f"Sort the images in:\n{folder}\n\nFiles will be moved into subfolders."):
             return
 
         self.preview_btn.configure(state="disabled")
