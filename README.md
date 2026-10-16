@@ -14,7 +14,19 @@ python image-sorter/image_sorter_app.py      # needs: pip install -r image-sorte
 python store-lookup/store_lookup.py    # needs the two data CSVs (see below)
 ```
 
-Windows builds: run `build_windows.bat` in `image-sorter/` or `store-lookup/` (uses PyInstaller, output goes to `dist/`).
+## Building image-sorter
+
+The same code runs on both systems; only the build script differs. Both use PyInstaller and put the result in `image-sorter/dist/`.
+
+| | Windows | Mac |
+| --- | --- | --- |
+| Build | run `image-sorter\build_windows.bat` | `sh image-sorter/build_mac.sh` |
+| Output | `ImageSorter.exe` | `ImageSorter.app` |
+| Store label reading | Windows.Media.Ocr | Apple Vision |
+| Sounds | winsound | afplay |
+| Notes | | Built for the Mac's chip (Apple Silicon or Intel). Unsigned, so the first time on another Mac: right-click → Open. |
+
+store-lookup has a Windows build too: run `build_windows.bat` in `store-lookup/`.
 
 ## Notes
 

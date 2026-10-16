@@ -5,10 +5,12 @@
     play("complete")  bright four-note "task complete" chime
 
 Sounds are written once to a temp folder as .wav files and played without
-blocking. Only Windows has sound (winsound); elsewhere play() does nothing.
+blocking: with winsound on Windows, afplay on macOS. Elsewhere play() does nothing.
 """
 import math
+import shutil
 import struct
+import subprocess
 import tempfile
 import threading
 import wave
@@ -18,6 +20,7 @@ try:
     import winsound
 except ImportError:  # macOS / Linux
     winsound = None
+AFPLAY = shutil.which("afplay")  # built into macOS
 
 RATE = 22050
 BELL = ((1, 1.0), (2, 0.4), (3.01, 0.15))   # (multiple of the note, loudness) overtones
@@ -80,7 +83,7 @@ def _path(name):
 
 def prepare():
     """Write all the sounds ahead of time, so the first click isn't delayed."""
-    if winsound:
+    if winsound or AFPLAY:
         for name in SOUNDS:
             _path(name)
 
@@ -92,3 +95,9 @@ def play(name):
                                winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_NODEFAULT)
         except (OSError, RuntimeError):
             pass  # no sound device; carry on silently
+    elif AFPLAY:
+        try:
+            subprocess.Popen([AFPLAY, str(_path(name))],
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except OSError:
+            pass
