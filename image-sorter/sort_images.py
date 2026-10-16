@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-"""Sort images in a folder into subfolders of 2 consecutive filename numbers.
+"""Sort images in a folder into subfolders of 2 consecutive filename numbers,
+named after the store label (e.g. "MCD7958DT") found in either photo.
 
-Example: IMG_0735.jpg + IMG_0736.jpg -> IMG_0735-0736/
-         IMG_0737.jpg + IMG_0738.jpg -> IMG_0737-0738/
+Example: IMG_0735.jpg + IMG_0736.jpg -> 7958/
+         IMG_0737.jpg + IMG_0738.jpg -> 8120/
+
+Pairs from the same store share one folder. A pair where no label can be read
+goes into NO_STORE_IMG_0735-0736/ for a manual look. If the two photos show
+different stores, each goes to its own store's folder.
 
 An image whose neighbour number is missing (e.g. IMG_0306 when there's no
 IMG_0307) goes into a folder by itself, IMG_0306/. So does a duplicate: a file
@@ -28,10 +33,14 @@ import time
 from collections import defaultdict
 from pathlib import Path
 
+from store_ocr import store_number
+
 DEFAULT_FOLDER = Path.home() / "Image Inbox"
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".heic", ".heif", ".gif", ".tif", ".tiff",
               ".bmp", ".webp", ".dng", ".cr2", ".nef", ".arw"}
 # Videos (.mov, .mp4, ...) aren't in the list, so they stay loose in the folder.
+# Formats the OCR reads most reliably come first; raw files are a last resort.
+OCR_ORDER = [".jpg", ".jpeg", ".png", ".heic", ".heif", ".tif", ".tiff"]
 SETTLE_SECS = 5    # wait until files haven't changed for this long (still uploading)
 POLL_SECS = 3      # how often watch mode checks the folder
 
@@ -65,7 +74,54 @@ def pair_name(a, b):
     return f"{a}-{num[0] if num else b}"
 
 
-def sort_folder(folder, dry_run=False, move_odd=False, settle=0, quiet=False, log=print):
+def read_store(files):
+    """Store number from the first of these files (one image, several formats) that has a label."""
+    rank = lambda f: OCR_ORDER.index(f.suffix.lower()) if f.suffix.lower() in OCR_ORDER else len(OCR_ORDER)
+    for f in sorted(files, key=rank):
+        store = store_number(f)
+        if store:
+            return store
+    return None
+
+
+def name_by_store(moves, by_stem, log, progress=None):
+    """Rename each pair's folder to the store it shows, e.g. IMG_0735-0736 -> 7958.
+
+    progress(done, total) is called after each photo is read, since reading is the slow part.
+    """
+    total = sum(len(group) for name, group in moves if not name.startswith("DUPLICATE_"))
+    done = 0
+    if progress:
+        progress(done, total)
+    named = []
+    for name, group in moves:
+        if name.startswith("DUPLICATE_"):
+            named.append((name, group))
+            continue
+        stores = {}
+        for stem in group:
+            try:
+                stores[stem] = read_store(by_stem[stem])
+            except RuntimeError as e:  # no OCR on this computer: keep the number names
+                log(f"Can't read store labels: {e}")
+                return moves
+            done += 1
+            if progress:
+                progress(done, total)
+        found = set(stores.values()) - {None}
+        if len(found) == 1:
+            named.append((found.pop(), group))
+        elif not found:
+            named.append((f"NO_STORE_{name}", group))
+        else:
+            log(f"WARNING {' and '.join(group)} show different stores: "
+                f"{', '.join(sorted(found))}. Each goes to its own store folder.")
+            for stem in group:
+                named.append((stores[stem] or f"NO_STORE_{stem}", [stem]))
+    return named
+
+
+def sort_folder(folder, dry_run=False, move_odd=False, settle=0, quiet=False, log=print, progress=None):
     cutoff = time.time() - settle
     by_stem = defaultdict(list)
     for f in folder.iterdir():
@@ -117,6 +173,8 @@ def sort_folder(folder, dry_run=False, move_odd=False, settle=0, quiet=False, lo
         else:
             moves.append((a, [a]))
             i += 1
+
+    moves = name_by_store(moves, by_stem, log, progress)
 
     for name, group in moves:
         dest = folder / name

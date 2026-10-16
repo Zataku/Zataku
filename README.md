@@ -2,7 +2,7 @@
 
 | Project | Stack | What it is |
 | --- | --- | --- |
-| [image-sorter](image-sorter/) | Python, Tkinter | Pick a folder of images and sort them into numbered folders. Preview mode shows the result without moving anything. |
+| [image-sorter](image-sorter/) | Python, Tkinter | Pick a folder of images and sort them in pairs into store folders, named from the store label (e.g. MCD7958DT) read off the photos. Preview mode shows the result without moving anything. |
 | [js-calendar](js-calendar/) | HTML, CSS, JS | Calendar widget (git submodule → [Zataku/js-calendar](https://github.com/Zataku/js-calendar)). |
 | react-portfolio-website | React (CRA) | Personal portfolio site (not published yet). |
 | [space-invaders](space-invaders/) | Python, pygame | Space Invaders clone. |
@@ -12,7 +12,7 @@
 
 ```sh
 # Python projects
-python image-sorter/image_sorter_app.py
+python image-sorter/image_sorter_app.py      # needs: pip install -r image-sorter/requirements.txt
 python space-invaders/main.py          # needs: pip install pygame
 python store-lookup/store_lookup.py    # needs the two data CSVs (see below)
 
