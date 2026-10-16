@@ -18,3 +18,8 @@ node_modules/
 
 # Private data - never commit
 store-lookup/*.csv
+
+# pdf-to-sheet private samples
+pdf-to-sheet/samples/
+pdf-to-sheet/config.json
+pdf-to-sheet/processed.json

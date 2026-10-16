@@ -1,0 +1,16 @@
+{
+  "web_app_url": "PASTE_THE_WEB_APP_URL_ENDING_IN_/exec",
+  "secret": "CHANGE_ME",
+  "worksheet": "McDonalds",
+  "inbox": "~/Desktop/PDF Inbox",
+  "columns": {
+    "A": "store_number",
+    "C": "street",
+    "D": "city",
+    "E": "province",
+    "F": "postal_code",
+    "J": "ship_date",
+    "M": "install_date"
+  },
+  "duplicate_check": ["A", "J"]
+}

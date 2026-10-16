@@ -4,6 +4,7 @@
 | --- | --- | --- |
 | [image-sorter](image-sorter/) | Python, Tkinter | Pick a folder of images and sort them in pairs into store folders, named from the store label (e.g. MCD7958DT) read off the photos. Preview mode shows the result without moving anything. |
 | [js-calendar](js-calendar/) | HTML, CSS, JS | Calendar widget (git submodule → [Zataku/js-calendar](https://github.com/Zataku/js-calendar)). |
+| [pdf-to-sheet](pdf-to-sheet/) | Google Apps Script (+ optional Python) | Upload Acrelec picking-list PDFs to a Drive folder; the store number, address, ship date and install date are filled into the McDonalds tab of a Google Sheet. |
 | [store-lookup](store-lookup/) | Python, Tkinter | Look up a Tim Hortons store's merchant IDs, address and phone from its 6-digit gift card code. |
 
 ## Running
