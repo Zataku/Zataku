@@ -1,14 +1,17 @@
 """Read the store number from a photo of a store label like "MCD7958DT" or "MCD7958DEL".
 
-Uses the text recognition built into the OS, so there's nothing extra to install
-beyond the Python packages in requirements.txt:
+First tries the text recognition built into the OS:
     macOS:   Apple Vision      (pyobjc-framework-Vision, pyobjc-framework-Quartz)
     Windows: Windows.Media.Ocr (winrt-* packages)
+and if that finds no label, falls back to RapidOCR (the rapidocr + onnxruntime packages),
+which reads heavy bold fonts much better. Everything runs on this computer: RapidOCR's
+models ship inside the package and nothing is downloaded or uploaded.
 
     store_number(path) -> "7958", or None if no label could be read.
 """
 import re
 import sys
+import threading
 
 # MCD <digits> DT|DEL. OCR sometimes reads digits as look-alike letters and adds spaces,
 # so the number part allows O/I/L/S/B/Z and spaces, then gets cleaned up.
@@ -16,24 +19,29 @@ LABEL_PATTERN = re.compile(r"M\s*C\s*D\s*([0-9OQILSBZ ]{2,8}?)\s*(D\s*E\s*L|D\s*
 LOOKALIKES = str.maketrans({"O": "0", "Q": "0", "I": "1", "L": "1", "S": "5", "B": "8", "Z": "2", " ": None})
 # Fallbacks for when the label itself can't be read (Windows OCR misses its heavy bold font):
 #   the ATP admin screen's device name, "DBLC29084DT" or "DBLC29084DEL"
-#   the scale screen's "OuiCheck Cloud (n°29084)", where OCR usually reads "°" as "0"
+#   the scale screen's "OuiCheck Cloud (n°29084)", where OCR often reads "°" as "0" or "*"
 SCREEN_PATTERNS = [
     re.compile(r"D\s*B\s*L\s*C\s*([0-9OQISBZ]{3,6}?)\s*(D\s*E\s*L|D\s*T)", re.IGNORECASE),
-    re.compile(r"Cloud\s*\(\s*n\s*[°º0oO]?\s*([0-9]{3,6})\s*\)", re.IGNORECASE),
+    re.compile(r"Cloud\s*\(\s*n\s*[°º*0oO]?\s*([0-9]{3,6})\s*\)", re.IGNORECASE),
 ]
 
 
 def find_store(lines):
     """Return the store number from OCR'd lines, or None."""
+    return find_store_ranked(lines)[0]
+
+
+def find_store_ranked(lines):
+    """(store, rank) from OCR'd lines: rank 0 = label, 1 = device name, 2 = scale screen. (None, None) if none."""
     # The label wins, then the screens. Check each line alone, then all text
     # joined, in case the text was split.
-    for pattern in [LABEL_PATTERN] + SCREEN_PATTERNS:
+    for rank, pattern in enumerate([LABEL_PATTERN] + SCREEN_PATTERNS):
         for text in lines + [" ".join(lines)]:
             for match in pattern.finditer(text):
                 digits = match.group(1).upper().translate(LOOKALIKES)
                 if len(digits) >= 3 and digits.isdigit():
-                    return digits
-    return None
+                    return digits, rank
+    return None, None
 
 
 if sys.platform == "darwin":
@@ -59,7 +67,7 @@ if sys.platform == "darwin":
                 lines.append(str(candidates[0].string()))
         return lines
 
-    def store_number(path):
+    def _builtin_store_number(path):
         source = Quartz.CGImageSourceCreateWithURL(NSURL.fileURLWithPath_(str(path)), None)
         if source is None:
             return None
@@ -134,7 +142,7 @@ elif sys.platform == "win32":
                 return store
         return None
 
-    def store_number(path):
+    def _builtin_store_number(path):
         try:
             return asyncio.run(_store_number(path))
         except ImportError as e:
@@ -143,5 +151,97 @@ elif sys.platform == "win32":
             return None  # a format Windows can't decode, e.g. HEIC without the HEIF extension
 
 else:
-    def store_number(path):
-        raise RuntimeError("Reading store labels needs macOS or Windows.")
+    def _builtin_store_number(path):
+        return None  # no built-in OCR; RapidOCR does all the reading
+
+
+# ---------- RapidOCR fallback ----------
+
+_rapid_engine = None
+_rapid_lock = threading.Lock()  # one engine, shared by every reading thread; it isn't thread-safe
+
+
+def _rapid():
+    """Load RapidOCR the first time it's needed (it takes a second or two). None if it isn't installed."""
+    global _rapid_engine
+    if _rapid_engine is None:
+        try:
+            from rapidocr import RapidOCR
+        except ImportError:
+            _rapid_engine = False
+        else:
+            # Default settings use the models bundled in the package, so nothing is downloaded.
+            _rapid_engine = RapidOCR(params={"Global.log_level": "error"})
+    return _rapid_engine or None
+
+
+def _rapid_store_number(path):
+    import numpy as np
+    from PIL import Image, ImageOps
+
+    try:
+        with Image.open(path) as im:
+            img = np.asarray(ImageOps.exif_transpose(im).convert("RGB"))[:, :, ::-1]  # RGB -> BGR for OpenCV
+    except OSError:
+        return None  # a format Pillow can't open, e.g. HEIC
+
+    def read(part, turns):
+        """(store, confidence, rank) for the best find in this view (see find_store_ranked), or (None, 0, None)."""
+        with _rapid_lock:
+            result = _rapid()(np.ascontiguousarray(np.rot90(part, turns)))
+        lines = list(zip(result.txts or [], result.scores or []))
+        found = [find_store_ranked([text]) + (score,) for text, score in lines]
+        found = [(store, score, rank) for store, rank, score in found if store]
+        if not found and lines:  # label split over several lines
+            store, rank = find_store_ranked([text for text, _ in lines])
+            found = [(store, min(score for _, score in lines), rank)] if store else []
+        # Label beats device name beats screen; then the more confident read.
+        return min(found, key=lambda f: (f[2], -f[1]), default=(None, 0, None))
+
+    # Views to try, best first. RapidOCR straightens sideways and upside-down text lines
+    # itself, but a sideways photo can still hide the label from its text finder, so try every
+    # turn. It also shrinks photos to 2000px, which can make a small label unreadable (reading
+    # at full size is worse: its text finder expects normal-sized text), so then try the photo
+    # in four overlapping quarters.
+    h, w = img.shape[:2]
+    th, tw = int(h * 0.6), int(w * 0.6)
+    views = [(img, turns) for turns in (0, 1, 3, 2)]
+    views += [(img[y:y + th, x:x + tw], turns) for y in (0, h - th) for x in (0, w - tw) for turns in (0, 1)]
+
+    # A confident label or device-name read is trusted at once. A less confident one is kept
+    # in case nothing better turns up: a sideways label read without turning can come out
+    # at 0.64 as "MCD271DT" when it's really MCD6271DT.
+    # The scale screen's "(n°2589)" is easy to misread even confidently ("n22589" at 0.94, the °
+    # taken for a 2), so screen reads are a vote: the first number two confident views agree on,
+    # or failing that, the number with the most total confidence.
+    best = (None, 0)
+    screen_votes, confident_votes = {}, {}
+    for part, turns in views:
+        store, score, rank = read(part, turns)
+        if not store:
+            continue
+        if rank < 2:
+            if score >= 0.9:
+                return store
+            if score > best[1]:
+                best = (store, score)
+        else:
+            screen_votes[store] = screen_votes.get(store, 0) + score
+            if score >= 0.9:
+                confident_votes[store] = confident_votes.get(store, 0) + 1
+                if confident_votes[store] >= 2:
+                    return store
+    if best[0]:
+        return best[0]
+    return max(screen_votes, key=screen_votes.get, default=None)
+
+
+def store_number(path):
+    store = _builtin_store_number(path)
+    if store:
+        return store
+    if _rapid() is None:
+        if sys.platform not in ("darwin", "win32"):
+            raise RuntimeError("Reading store labels needs RapidOCR on this system. Run: pip install -r requirements.txt")
+        return None
+    return _rapid_store_number(path)

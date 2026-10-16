@@ -23,9 +23,11 @@ The same code runs on both systems; only the build script differs. Both use PyIn
 | --- | --- | --- |
 | Build | run `image-sorter\build_windows.bat` | `sh image-sorter/build_mac.sh` |
 | Output | `ImageSorter.exe` | `ImageSorter.app` |
-| Store label reading | Windows.Media.Ocr | Apple Vision |
+| Store label reading | Windows.Media.Ocr, then RapidOCR if it finds no label | Apple Vision, then RapidOCR if it finds no label |
 | Sounds | winsound | afplay |
 | Notes | | Built for the Mac's chip (Apple Silicon or Intel). Unsigned, so the first time on another Mac: right-click → Open. |
+
+Label reading runs entirely on the computer. RapidOCR's models ship inside the `rapidocr` package, and both builds bundle them, so nothing is downloaded or uploaded. RapidOCR adds about 100 MB to the build.
 
 store-lookup has a Windows build too: run `build_windows.bat` in `store-lookup/`.
 

@@ -9,3 +9,7 @@ winrt-Windows.Graphics.Imaging; sys_platform == "win32"
 winrt-Windows.Media.Ocr; sys_platform == "win32"
 winrt-Windows.Storage; sys_platform == "win32"
 winrt-Windows.Storage.Streams; sys_platform == "win32"
+# Fallback text recognition when the built-in one finds no label. Runs offline: 3.10.0 ships
+# its models inside the package (pinned so a later version can't switch to downloading them).
+rapidocr==3.10.0
+onnxruntime
