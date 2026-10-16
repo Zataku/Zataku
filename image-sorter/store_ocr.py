@@ -14,16 +14,25 @@ import sys
 # so the number part allows O/I/L/S/B/Z and spaces, then gets cleaned up.
 LABEL_PATTERN = re.compile(r"M\s*C\s*D\s*([0-9OQILSBZ ]{2,8}?)\s*(D\s*E\s*L|D\s*T)", re.IGNORECASE)
 LOOKALIKES = str.maketrans({"O": "0", "Q": "0", "I": "1", "L": "1", "S": "5", "B": "8", "Z": "2", " ": None})
+# Fallbacks for when the label itself can't be read (Windows OCR misses its heavy bold font):
+#   the ATP admin screen's device name, "DBLC29084DT" or "DBLC29084DEL"
+#   the scale screen's "OuiCheck Cloud (n°29084)", where OCR usually reads "°" as "0"
+SCREEN_PATTERNS = [
+    re.compile(r"D\s*B\s*L\s*C\s*([0-9OQISBZ]{3,6}?)\s*(D\s*E\s*L|D\s*T)", re.IGNORECASE),
+    re.compile(r"Cloud\s*\(\s*n\s*[°º0oO]?\s*([0-9]{3,6})\s*\)", re.IGNORECASE),
+]
 
 
 def find_store(lines):
     """Return the store number from OCR'd lines, or None."""
-    # Check each line alone, then all text joined, in case the label was split.
-    for text in lines + [" ".join(lines)]:
-        for match in LABEL_PATTERN.finditer(text):
-            digits = match.group(1).upper().translate(LOOKALIKES)
-            if len(digits) >= 3 and digits.isdigit():
-                return digits
+    # The label wins, then the screens. Check each line alone, then all text
+    # joined, in case the text was split.
+    for pattern in [LABEL_PATTERN] + SCREEN_PATTERNS:
+        for text in lines + [" ".join(lines)]:
+            for match in pattern.finditer(text):
+                digits = match.group(1).upper().translate(LOOKALIKES)
+                if len(digits) >= 3 and digits.isdigit():
+                    return digits
     return None
 
 
