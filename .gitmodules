@@ -1,0 +1,3 @@
+[submodule "js-calendar"]
+	path = js-calendar
+	url = https://github.com/Zataku/js-calendar.git
