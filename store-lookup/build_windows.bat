@@ -1,7 +1,7 @@
 @echo off
 REM Builds "Store Lookup.exe" on Windows.
 REM Needs Python 3 from python.org (tick "Add python.exe to PATH" when installing).
-REM Keep this file in the same folder as store_lookup.py and the two CSVs, then double-click it.
+REM Keep this file in the same folder as store_lookup.py, the two CSVs and template.cfg, then double-click it.
 
 cd /d "%~dp0"
 
@@ -12,6 +12,7 @@ build_env\Scripts\pyinstaller --noconfirm --onefile --windowed --name "Store Loo
   --hidden-import certifi ^
   --add-data "Chase TH Active Accounts - Canada 2(Data).csv;." ^
   --add-data "Tim Hortons - Gift Card MIDs(Sheet 1).csv;." ^
+  --add-data "template.cfg;." ^
   store_lookup.py || goto :error
 
 echo.

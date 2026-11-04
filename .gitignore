@@ -18,6 +18,7 @@ node_modules/
 
 # Private data - never commit
 store-lookup/*.csv
+store-lookup/template.cfg
 
 # pdf-to-sheet private samples
 pdf-to-sheet/samples/
