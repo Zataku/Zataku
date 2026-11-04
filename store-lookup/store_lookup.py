@@ -411,10 +411,14 @@ def run_gui(chase, gift):
         while not phones.empty():
             n, result, (phone, th_addr, problem) = phones.get()
             if n == current[0]:
-                show(build_report(result, phone, th_addr), True)
+                text = build_report(result, phone, th_addr)
+                show(text, True)
                 code_ready[0] = result[0]
                 save_btn.config(state="normal")
-                hint = "Check the report (you can edit it), then Save."
+                # point out up front anything to edit before the MCM files can be made
+                todo = parse_report(result[0], text)[1]
+                hint = ("Edit the report before saving the MCM files:\n  " + "\n  ".join(todo)
+                        if todo else "Check the report (you can edit it), then Save.")
                 status.config(text=f"{problem}\n{hint}" if problem else hint)
         root.after(100, check_phones)
 
