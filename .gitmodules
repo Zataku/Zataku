@@ -1,3 +1,9 @@
 [submodule "js-calendar"]
 	path = js-calendar
 	url = https://github.com/Zataku/js-calendar.git
+[submodule "eighth-gallery"]
+	path = eighth-gallery
+	url = https://github.com/Zataku/eighth-gallery-store-website.git
+[submodule "gavin-has-mail"]
+	path = gavin-has-mail
+	url = https://github.com/Zataku/gavin-has-mail.git

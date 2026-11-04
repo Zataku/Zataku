@@ -2,6 +2,8 @@
 
 | Project | Stack | What it is |
 | --- | --- | --- |
+| [eighth-gallery](eighth-gallery/) | HTML, CSS, JS | Clothing store front end built as a working 1-bit classic desktop, with boot sequence, windows, sounds and a bag. Sample products; Shopify not connected yet. (Private git submodule → Zataku/eighth-gallery-store-website.) |
+| [gavin-has-mail](gavin-has-mail/) | React, Vite | Pixel-art invite app: Gavin the baby seal walks you through making an invite, then walks your date through accepting it, picking snacks and adding it to Google Calendar. Deployed on Vercel. (Private git submodule → Zataku/gavin-has-mail.) |
 | [image-sorter](image-sorter/) | Python, Tkinter | Pick a folder of images and sort them in pairs into store folders, named from the store label (e.g. MCD7958DT) read off the photos. Preview mode shows the result without moving anything. |
 | [js-calendar](js-calendar/) | HTML, CSS, JS | Calendar widget (git submodule → [Zataku/js-calendar](https://github.com/Zataku/js-calendar)). |
 | [pdf-to-sheet](pdf-to-sheet/) | Google Apps Script (+ optional Python) | Upload Acrelec picking-list PDFs to a Drive folder; the store number, address, ship date and install date are filled into the McDonalds tab of a Google Sheet. |
@@ -34,4 +36,4 @@ store-lookup builds the same way: run `store-lookup\build_windows.bat` on Window
 ## Notes
 
 - **store-lookup data is not in the repo.** It reads `Chase TH Active Accounts - Canada 2(Data).csv`, `Tim Hortons - Gift Card MIDs(Sheet 1).csv` and `template.cfg` (a working kiosk config that every saved kiosk file is copied from) from its own folder. They are git-ignored on purpose because they hold private merchant data.
-- After cloning, run `git submodule update --init` to fetch `js-calendar`.
+- After cloning, run `git submodule update --init` to fetch `js-calendar`. `eighth-gallery` and `gavin-has-mail` are private repos, so they only download for accounts with access to them.
