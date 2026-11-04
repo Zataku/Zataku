@@ -7,3 +7,6 @@
 [submodule "gavin-has-mail"]
 	path = gavin-has-mail
 	url = https://github.com/Zataku/gavin-has-mail.git
+[submodule "store-lookup/kiosk-screenshots"]
+	path = store-lookup/kiosk-screenshots
+	url = https://github.com/Zataku/kiosk-screenshots.git
