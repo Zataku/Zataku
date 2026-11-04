@@ -23,11 +23,11 @@ The same code runs on both systems; only the build script differs. Both use PyIn
 | --- | --- | --- |
 | Build | run `image-sorter\build_windows.bat` | `sh image-sorter/build_mac.sh` |
 | Output | `ImageSorter.exe` | `ImageSorter.app` |
-| Store label reading | Windows.Media.Ocr, then RapidOCR if it finds no label | Apple Vision, then RapidOCR if it finds no label |
+| Store label reading | Windows.Media.Ocr, then RapidOCR if it finds no label | Apple Vision |
 | Sounds | winsound | afplay |
 | Notes | | Built for the Mac's chip (Apple Silicon or Intel). Unsigned, so the first time on another Mac: right-click → Open. |
 
-Label reading runs entirely on the computer. RapidOCR's models ship inside the `rapidocr` package, and both builds bundle them, so nothing is downloaded or uploaded. RapidOCR adds about 100 MB to the build.
+Label reading runs entirely on the computer. RapidOCR's models ship inside the `rapidocr` package and the Windows build bundles them, so nothing is downloaded or uploaded. RapidOCR is Windows-only: on the Mac, Apple Vision already reads the labels, and RapidOCR would add about 220 MB for no gain. The Windows build uses [windows.spec](image-sorter/windows.spec), which leaves out parts of OpenCV and onnxruntime the app never loads.
 
 store-lookup builds the same way: run `store-lookup\build_windows.bat` on Windows or `sh store-lookup/build_mac.sh` on a Mac. Both bundle the CSVs and `template.cfg` into the app, and put it in `store-lookup/dist/`.
 

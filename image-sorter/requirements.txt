@@ -9,7 +9,9 @@ winrt-Windows.Graphics.Imaging; sys_platform == "win32"
 winrt-Windows.Media.Ocr; sys_platform == "win32"
 winrt-Windows.Storage; sys_platform == "win32"
 winrt-Windows.Storage.Streams; sys_platform == "win32"
-# Fallback text recognition when the built-in one finds no label. Runs offline: 3.10.0 ships
-# its models inside the package (pinned so a later version can't switch to downloading them).
-rapidocr==3.10.0
-onnxruntime
+# Windows only: fallback text recognition when Windows.Media.Ocr finds no label. Left off the Mac,
+# where Apple Vision already reads the labels and RapidOCR would add ~220 MB for no gain.
+# Runs offline: 3.10.0 ships its models inside the package (pinned so a later version can't
+# switch to downloading them).
+rapidocr==3.10.0; sys_platform != "darwin"
+onnxruntime; sys_platform != "darwin"
