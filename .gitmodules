@@ -1,6 +1,7 @@
 [submodule "js-calendar"]
 	path = js-calendar
 	url = https://github.com/Zataku/js-calendar.git
+	ignore = untracked
 [submodule "eighth-gallery"]
 	path = eighth-gallery
 	url = https://github.com/Zataku/eighth-gallery-store-website.git
@@ -10,3 +11,6 @@
 [submodule "store-lookup/kiosk-screenshots"]
 	path = store-lookup/kiosk-screenshots
 	url = https://github.com/Zataku/kiosk-screenshots.git
+[submodule "digicam-desktop"]
+	path = digicam-desktop
+	url = https://github.com/Zataku/digicam-desktop.git
